@@ -31,7 +31,7 @@ st.title('Exchange Rate Predictor')
 
 st.markdown("""
     **Description:**  
-    This application serves as a quantitative tool for the analysis and prediction of exchange rates using time-series data. 
+    This application serves as a tool for the analysis and prediction of exchange rates using time-series data. 
     It incorporates various analytical techniques including lag variable creation, seasonal decomposition, and variable selection through backward elimination. 
     Users have the flexibility to customize each step of the analysis, visualize inherent patterns in the data.
 """)
