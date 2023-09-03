@@ -42,7 +42,7 @@ if uploaded_file is not None:
     df_bop = df_bop.iloc[:,:-6]
     
     # Check for the existence of the file
-    if not os.path.exists("BOP_exchange.xlsx"):
+    if not os.path.exists("BOP_Exchange.xlsx"):
         with st.spinner("Downloading Exchange Rate Data..."):
     
             # Specify the URL to download the file from
