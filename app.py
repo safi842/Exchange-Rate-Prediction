@@ -50,7 +50,7 @@ if uploaded_file is not None:
     
             # Download the file and save it in the current directory
             response = requests.get(url)
-            with open("BOP_exchange.xlsx", "wb") as f:
+            with open("BOP_Exchange.xlsx", "wb") as f:
                 f.write(response.content)
             st.write("File downloaded successfully.")
 
