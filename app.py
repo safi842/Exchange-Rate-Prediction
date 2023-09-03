@@ -27,7 +27,17 @@ def remove_alphabets(value):
         return re.sub(r'[a-zA-Z\s,]', '', value)
     return value
 
-st.title('Linear Regression Model for Exchange Rate Prediction')
+st.title('Exchange Rate Predictor')
+
+st.markdown("""
+    **Description:**  
+    This application serves as a quantitative tool for the analysis and prediction of exchange rates using time-series data. 
+    It incorporates various analytical techniques including lag variable creation, seasonal decomposition, and variable selection through backward elimination. 
+    Users have the flexibility to customize each step of the analysis, visualize inherent patterns in the data.
+""")
+
+# ... (rest of the code)
+
 
 # File Upload
 uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
