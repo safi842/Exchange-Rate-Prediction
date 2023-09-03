@@ -94,7 +94,7 @@ if uploaded_file is not None:
     st.subheader('Seasonal Decomposition')
     seasonal_decompose_option = st.checkbox("Would you like to perform seasonal decomposition?")
     if seasonal_decompose_option:
-        variables_to_decompose = st.multiselect("Select variables to decompose", options=data.columns)
+        variables_to_decompose = st.multiselect("Select variables to decompose", options=data.columns,default=['Current account', 'Goods', 'Services'])
         include_trend = st.checkbox("Include Trend Component")
         include_seasonal = st.checkbox("Include Seasonal Component")
         include_residual = st.checkbox("Include Residual Component")
