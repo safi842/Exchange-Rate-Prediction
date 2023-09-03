@@ -54,7 +54,7 @@ if uploaded_file is not None:
                 f.write(response.content)
             st.write("File downloaded successfully.")
 
-    country_loc = list(pd.read_excel('./BOP_Exchange.xlsx',sheet_name = 'Nominal', header = 3).columns).index(country_name)
+    country_loc = list(pd.read_excel('.\BOP_Exchange.xlsx',sheet_name = 'Nominal', header = 3).columns).index(country_name)
     df_ex = pd.read_excel('BOP_Exchange.xlsx',sheet_name = 'Nominal', header = 4)
     df_ex.index = df_ex.set_index('Unnamed: 0').index.to_period('Q')
     df_ex = df_ex[~df_ex.index.duplicated(keep='last')]
