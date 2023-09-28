@@ -15,6 +15,8 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.model_selection import train_test_split
 import statsmodels.api as sm
+from io import BytesIO
+from pyxlsb import open_workbook as open_xlsb
 
 def calculate_vif(X):
     vif_data = pd.DataFrame()
@@ -56,13 +58,25 @@ if uploaded_file is not None:
         with st.spinner("Downloading Exchange Rate Data..."):
     
             # Specify the URL to download the file from
-            url = "https://github.com/safi842/Exchange-Rate-Prediction/releases/download/v1/BOP_Exchange.xlsx"
+            url1 = "https://github.com/safi842/Exchange-Rate-Prediction/releases/download/v1/BOP_Exchange.xlsx"
+            url2 = "https://github.com/safi842/Exchange-Rate-Prediction/releases/download/v2/Abhiraj.-.Profits.xlsx"
+            url3 = "https://github.com/safi842/Exchange-Rate-Prediction/releases/download/v2/Abhiraj.-.PE.Ratios.xlsx"
+            url4 = "https://github.com/safi842/Exchange-Rate-Prediction/releases/download/v2/Abhiraj.-.Commodity.Prices.xlsx"
     
             # Download the file and save it in the current directory
-            response = requests.get(url)
+            response1 = requests.get(url1)
             with open("BOP_Exchange.xlsx", "wb") as f:
-                f.write(response.content)
-            st.write("File downloaded successfully.")
+                f.write(response1.content)
+            response2 = requests.get(url2)
+            with open('Abhiraj - Profits.xlsx', "wb") as f:
+                f.write(response2.content)
+            response3 = requests.get(url3)
+            with open("Abhiraj - PE Ratios.xlsx", "wb") as f:
+                f.write(response3.content)
+            response4 = requests.get(url4)
+            with open("Abhiraj - Commodity Prices.xlsx", "wb") as f:
+                f.write(response4.content)
+            st.write("Files downloaded successfully.")
 
     country_loc = list(pd.read_excel('BOP_Exchange.xlsx',sheet_name = 'Nominal', header = 3).columns).index(country_name)
     df_ex = pd.read_excel('BOP_Exchange.xlsx',sheet_name = 'Nominal', header = 4)
@@ -73,6 +87,57 @@ if uploaded_file is not None:
     df = df_bop.merge(df_ex, left_index=True, right_index=True, how='left')
     df = df.drop(columns=df.columns[df.eq("...").any()])
     df = df.applymap(remove_alphabets).apply(pd.to_numeric)
+    df_profits = pd.read_excel('Abhiraj - Profits.xlsx') 
+    df_pe = pd.read_excel('Abhiraj - PE Ratios.xlsx')
+    df_compr = pd.read_excel('Abhiraj - Commodity Prices.xlsx')
+    
+    # PROFIT
+    df_profits['Date'] = pd.to_datetime(df_profits['Date'])
+
+    # Set 'Date' as the index
+    df_profits.set_index('Date', inplace=True)
+
+    # Resample the data quarterly and compute the mean for each quarter
+    quarterly_df_profits = df_profits.resample('Q').mean()
+
+    quarterly_df_profits.index = quarterly_df_profits.index.to_period('Q')
+    quarterly_df_profits = quarterly_df_profits.diff(periods =4).dropna()
+    quarterly_df_profits = quarterly_df_profits[[country_name]]
+    quarterly_df_profits.columns = ['Profits diff']
+    
+    
+    # PE
+    df_pe['Date'] = pd.to_datetime(df_pe['Date'])
+
+    # Set 'Date' as the index
+    df_pe.set_index('Date', inplace=True)
+
+    # Resample the data quarterly and compute the mean for each quarter
+    quarterly_df_pe = df_pe.resample('Q').mean()
+
+    quarterly_df_pe.index = quarterly_df_pe.index.to_period('Q')
+    quarterly_df_pe[quarterly_df_pe < 0] = 0
+    quarterly_df_pe = quarterly_df_pe[[country_name]]
+    quarterly_df_pe.columns = ['PE ratio']
+    
+    # COMMODITY PRICES
+    df_compr['Date'] = pd.to_datetime(df_compr['Date'])
+
+    # Set 'Date' as the index
+    df_compr.set_index('Date', inplace=True)
+
+    # Resample the data quarterly and compute the mean for each quarter
+    quarterly_df_compr = df_compr.resample('Q').mean()
+
+    quarterly_df_compr.index = quarterly_df_compr.index.to_period('Q')
+    quarterly_df_compr = quarterly_df_compr.diff(periods =4).dropna()
+    quarterly_df_compr = quarterly_df_compr[[country_name]]
+    quarterly_df_compr.columns = ['Commodity Prices Diff']
+    
+    
+    df = df.merge(quarterly_df_profits, left_index=True, right_index=True, how='left')
+    df = df.merge(quarterly_df_pe, left_index=True, right_index=True, how='left')
+    df = df.merge(quarterly_df_compr, left_index=True, right_index=True, how='left')
     # Rename 'Credit' and 'Debit' columns by adding prefixes based on the preceding column
     new_columns = []
     prefix = None
@@ -89,12 +154,30 @@ if uploaded_file is not None:
     df = df.rename_axis('Date').reset_index()
     df['Date'] = df['Date'].astype('datetime64[ns]')
     df = df.set_index('Date')
+    df = df.dropna('index')
     data = df
     selected_vars = st.multiselect("Select variables to include in the model", options=data.columns.tolist(), default=['Current account', 'Goods', 'Services', 'Exchange Rate'])
     data = data[selected_vars]
     #st.session_state.download_data = data
     st.write('Data Preview:')
     st.write(data.head())
+    
+
+    def to_excel(df):
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1')
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+        format1 = workbook.add_format({'num_format': '0.00'}) 
+        worksheet.set_column('A:A', None, format1)  
+        writer.save()
+        processed_data = output.getvalue()
+        return processed_data
+    df_xlsx = to_excel(data[selected_vars])
+    st.download_button(label='Download Data',
+                                data=df_xlsx ,
+                                file_name= 'Full_Data.xlsx')
 
     st.subheader('Lag Variables')
     create_lag = st.selectbox("Would you like to create lag variables?", ["Yes", "No"])
